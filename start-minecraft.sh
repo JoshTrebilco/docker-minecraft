@@ -113,50 +113,6 @@ function downloadPaper {
   fi
 }
 
-function installForge {
-  TYPE=FORGE
-  norm=$VANILLA_VERSION
-
-  echo "Checking Forge version information."
-  case $FORGEVERSION in
-    RECOMMENDED)
-      curl -o /tmp/forge.json -sSL http://files.minecraftforge.net/maven/net/minecraftforge/forge/promotions_slim.json
-      FORGE_VERSION=$(cat /tmp/forge.json | jq -r ".promos[\"$norm-recommended\"]")
-      if [ $FORGE_VERSION = null ]; then
-        FORGE_VERSION=$(cat /tmp/forge.json | jq -r ".promos[\"$norm-latest\"]")
-        if [ $FORGE_VERSION = null ]; then
-          echo "ERROR: Version $FORGE_VERSION is not supported by Forge"
-          echo "       Refer to http://files.minecraftforge.net/ for supported versions"
-          exit 2
-        fi
-      fi
-      ;;
-
-    *)
-      FORGE_VERSION=$FORGEVERSION
-      ;;
-  esac
-
-  # URL format changed for 1.7.10 from 10.13.2.1300
-  sorted=$((echo $FORGE_VERSION; echo 10.13.2.1300) | sort -V | head -1)
-  if [[ $norm == '1.7.10' && $sorted == '10.13.2.1300' ]]; then
-      # if $FORGEVERSION >= 10.13.2.1300
-      normForgeVersion="$norm-$FORGE_VERSION-$norm"
-  else
-      normForgeVersion="$norm-$FORGE_VERSION"
-  fi
-
-  FORGE_INSTALLER="forge-$normForgeVersion-installer.jar"
-  SERVER="forge-$normForgeVersion-universal.jar"
-
-  if [ ! -e "$SERVER" ]; then
-    echo "Downloading $FORGE_INSTALLER ..."
-    wget -q http://files.minecraftforge.net/maven/net/minecraftforge/forge/$normForgeVersion/$FORGE_INSTALLER
-    echo "Installing $SERVER"
-    java -jar $FORGE_INSTALLER --installServer
-  fi
-}
-
 function installVanilla {
   SERVER="minecraft_server.$VANILLA_VERSION.jar"
 
@@ -198,18 +154,13 @@ case "$TYPE" in
     TYPE=SPIGOT
   ;;
 
-  FORGE|forge)
-    TYPE=FORGE
-    installForge
-  ;;
-
   VANILLA|vanilla)
     installVanilla
   ;;
 
   *)
       echo "Invalid type: '$TYPE'"
-      echo "Must be: VANILLA, FORGE, SPIGOT"
+      echo "Must be: VANILLA, SPIGOT"
       exit 1
   ;;
 

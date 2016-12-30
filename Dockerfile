@@ -1,6 +1,6 @@
 FROM java:8
 
-MAINTAINER itzg
+MAINTAINER joshtrebilco
 
 ENV APT_GET_UPDATE 2016-04-23
 RUN apt-get update
@@ -16,11 +16,14 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
 
 RUN useradd -s /bin/false --uid 1000 minecraft \
   && mkdir /data \
+  && mkdir /data/world \
+  && mkdir /data/world_the_end \
+  && mkdir /data/world_nether \
   && mkdir /config \
   && mkdir /mods \
   && mkdir /plugins \
   && mkdir /home/minecraft \
-  && chown minecraft:minecraft /data /config /mods /plugins /home/minecraft
+  && chown minecraft:minecraft /data /data/world /data/world_the_end /data/world_nether /config /mods /plugins /home/minecraft
 
 EXPOSE 25565 25575
 
@@ -30,7 +33,7 @@ COPY start-minecraft.sh /start-minecraft
 COPY mcadmin.jq /usr/share
 RUN chmod +x /usr/local/bin/*
 
-VOLUME ["/data","/mods","/config","/plugins","/home/minecraft"]
+VOLUME ["/data","/data/world","/data/world_the_end","/data/world_nether","/mods","/config","/plugins","/home/minecraft"]
 COPY server.properties /tmp/server.properties
 WORKDIR /data
 

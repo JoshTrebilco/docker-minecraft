@@ -5,10 +5,35 @@ minecraft-server:
   environment:
     EULA: "TRUE"
 
-  image: itzg/minecraft-server
+  image: joshtrebilco/docker-minecraft
 
   container_name: minecraft-server
 
   tty: true
   stdin_open: true
   restart: always
+
+Minecraft:
+  ports:
+    - "25565:25565"
+  environment:
+    EULA: "TRUE"
+  image: joshtrebilco/docker-minecraft
+  tty: true
+  stdin_open: true
+  restart: always
+  labels:
+    io.rancher.sidekicks: MinecraftData
+  volumes_from:
+    - MinecraftData
+
+MinecraftData:
+  image: busybox
+  labels:
+    io.rancher.container.start_once: 'true'
+  net: none
+  entrypoint: /bin/true
+  volumes:
+    - /data/world
+    - /data/world_the_end
+    - /data/world_nether
