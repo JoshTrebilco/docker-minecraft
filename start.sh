@@ -15,9 +15,6 @@ if [ "$SKIP_OWNERSHIP_FIX" != "TRUE" ]; then
   }
 
   fix_ownership /data
-  fix_ownership /data/world
-  fix_ownership /data/world_the_end
-  fix_ownership /data/world_nether
   fix_ownership /home/minecraft
 fi
 
