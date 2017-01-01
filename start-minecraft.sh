@@ -1,9 +1,9 @@
 #!/bin/bash
 
 #umask 002
-export HOME=/data
+export HOME=/home/minecraft/
 
-if [ ! -e /data/eula.txt ]; then
+if [ ! -e data/eula.txt ]; then
   if [ "$EULA" != "" ]; then
     echo "# Generated via Docker on $(date)" > eula.txt
     echo "eula=$EULA" >> eula.txt
@@ -36,19 +36,19 @@ case "X$VERSION" in
   ;;
 esac
 
-cd /data
+cd $HOME/data
 
 function buildSpigotFromSource {
   echo "Building Spigot $VANILLA_VERSION from source, might take a while, get some coffee"
-  mkdir /data/temp
-  cd /data/temp
-  wget -q -P /data/temp https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar && \
-    java -jar /data/temp/BuildTools.jar --rev $VANILLA_VERSION 2>&1 |tee /data/spigot_build.log| while read l; do echo -n .; done; echo "done"
-  mv spigot-*.jar /data/spigot_server.jar
-  mv craftbukkit-*.jar /data/craftbukkit_server.jar
+  mkdir data/temp
+  cd data/temp
+  wget -q -P data/temp https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar && \
+    java -jar data/temp/BuildTools.jar --rev $VANILLA_VERSION 2>&1 |tee /data/spigot_build.log| while read l; do echo -n .; done; echo "done"
+  mv spigot-*.jar data/spigot_server.jar
+  mv craftbukkit-*.jar data/craftbukkit_server.jar
   echo "Cleaning up"
-  rm -rf /data/temp
-  cd /data
+  rm -rf data/temp
+  cd data
 }
 
 function downloadSpigot {
@@ -64,7 +64,7 @@ function downloadSpigot {
   esac
 
   downloadUrl=$(restify --class=jar-div https://mcadmin.net/ | \
-    jq --arg version "$match $VANILLA_VERSION" -r -f /usr/share/mcadmin.jq)
+    jq --arg version "$match $VANILLA_VERSION" -r -f /home/minecraft/config/mcadmin.jq)
   if [[ -n $downloadUrl ]]; then
     echo "Downloading $match"
     wget -q -O $SERVER "$downloadUrl"
@@ -222,25 +222,25 @@ case "X$WORLD" in
   X[Hh][Tt][Tt][Pp]*)
     echo "Downloading world via HTTP"
     echo "$WORLD"
-    wget -q -O - "$WORLD" > /data/world.zip
+    wget -q -O - "$WORLD" > data/world.zip
     echo "Unzipping word"
-    unzip -q /data/world.zip
-    rm -f /data/world.zip
-    if [ ! -d /data/world ]; then
+    unzip -q data/world.zip
+    rm -f data/world.zip
+    if [ ! -d data/world ]; then
       echo World directory not found
-      for i in /data/*/level.dat; do
+      for i in data/*/level.dat; do
         if [ -f "$i" ]; then
           d=`dirname "$i"`
           echo Renaming world directory from $d
-          mv -f "$d" /data/world
+          mv -f "$d" data/world
         fi
       done
     fi
     if [ "$TYPE" = "SPIGOT" ]; then
       # Reorganise if a Spigot server
       echo "Moving End and Nether maps to Spigot location"
-      [ -d "/data/world/DIM1" ] && mv -f "/data/world/DIM1" "/data/world_the_end"
-      [ -d "/data/world/DIM-1" ] && mv -f "/data/world/DIM-1" "/data/world_nether"
+      [ -d "data/world/DIM1" ] && mv -f "data/world/DIM1" "$HOME/data/world_the_end"
+      [ -d "data/world/DIM-1" ] && mv -f "data/world/DIM-1" "$HOME/data/world_nether"
     fi
     ;;
   *)
@@ -257,11 +257,11 @@ case "X$MODPACK" in
     echo "$MODPACK"
     wget -q -O /tmp/modpack.zip "$MODPACK"
     if [ "$TYPE" = "SPIGOT" ]; then
-      mkdir -p /data/plugins
-      unzip -o -d /data/plugins /tmp/modpack.zip
+      mkdir -p $HOME/plugins
+      unzip -o -d $HOME/plugins /tmp/modpack.zip
     else
-      mkdir -p /data/mods
-      unzip -o -d /data/mods /tmp/modpack.zip
+      mkdir -p $HOME/data/mods
+      unzip -o -d $HOME/data/mods /tmp/modpack.zip
     fi
     rm -f /tmp/modpack.zip
     ;;
@@ -276,7 +276,7 @@ function setServerProp {
   local var=$2
   if [ -n "$var" ]; then
     echo "Setting $prop to $var"
-    sed -i "/$prop\s*=/ c $prop=$var" /data/server.properties
+    sed -i "/$prop\s*=/ c $prop=$var" $HOME/data/server.properties
   fi
 
 }
@@ -287,8 +287,8 @@ if [ ! -e server.properties ]; then
 
   if [ -n "$WHITELIST" ]; then
     echo "Creating whitelist"
-    sed -i "/whitelist\s*=/ c whitelist=true" /data/server.properties
-    sed -i "/white-list\s*=/ c white-list=true" /data/server.properties
+    sed -i "/whitelist\s*=/ c whitelist=true" $HOME/data/server.properties
+    sed -i "/white-list\s*=/ c white-list=true" $HOME/data/server.properties
   fi
 
   setServerProp "motd" "$MOTD"
@@ -325,7 +325,7 @@ if [ ! -e server.properties ]; then
     # check for valid values and only then set
     case $LEVEL_TYPE in
       DEFAULT|FLAT|LARGEBIOMES|AMPLIFIED|CUSTOMIZED)
-        sed -i "/level-type\s*=/ c level-type=$LEVEL_TYPE" /data/server.properties
+        sed -i "/level-type\s*=/ c level-type=$LEVEL_TYPE" $HOME/data/server.properties
         ;;
       *)
         echo "Invalid LEVEL_TYPE: $LEVEL_TYPE"
@@ -354,7 +354,7 @@ if [ ! -e server.properties ]; then
         ;;
     esac
     echo "Setting difficulty to $DIFFICULTY"
-    sed -i "/difficulty\s*=/ c difficulty=$DIFFICULTY" /data/server.properties
+    sed -i "/difficulty\s*=/ c difficulty=$DIFFICULTY" $HOME/data/server.properties
   fi
 
   if [ -n "$MODE" ]; then
@@ -380,7 +380,7 @@ if [ ! -e server.properties ]; then
         ;;
     esac
 
-    sed -i "/gamemode\s*=/ c gamemode=$MODE" /data/server.properties
+    sed -i "/gamemode\s*=/ c gamemode=$MODE" $HOME/data/server.properties
   fi
 fi
 
@@ -401,10 +401,10 @@ if [ -n "$ICON" -a ! -e server-icon.png ]; then
   wget -q -O /tmp/icon.img $ICON
   specs=$(identify /tmp/icon.img | awk '{print $2,$3}')
   if [ "$specs" = "PNG 64x64" ]; then
-    mv /tmp/icon.img /data/server-icon.png
+    mv /tmp/icon.img $HOME/data/server-icon.png
   else
     echo "Converting image to 64x64 PNG..."
-    convert /tmp/icon.img -resize 64x64! /data/server-icon.png
+    convert /tmp/icon.img -resize 64x64! $HOME/data/server-icon.png
   fi
 fi
 
@@ -417,7 +417,7 @@ if [ ! -e banned-ips.json ]; then
 fi
 
 # If any modules have been provided, copy them over
-[ -d /data/mods ] || mkdir /data/mods
+[ -d $HOME/data/mods ] || mkdir $HOME/data/mods
 for m in /mods/*.jar
 do
   if [ -f "$m" ]; then
@@ -425,7 +425,7 @@ do
     cp -f "$m" /data/mods
   fi
 done
-[ -d /data/config ] || mkdir /data/config
+[ -d $HOME/data/config ] || mkdir $HOME/data/config
 for c in /config/*
 do
   if [ -f "$c" ]; then
@@ -435,9 +435,9 @@ do
 done
 
 if [ "$TYPE" = "SPIGOT" ]; then
-  if [ -d /plugins ]; then
+  if [ -d $HOME/plugins ]; then
     echo Copying any Bukkit plugins over
-    cp -r /plugins /data
+    cp -r $HOME/plugins $HOME/data
   fi
 fi
 
@@ -448,9 +448,9 @@ else
 fi
 
 # If we have a bootstrap.txt file... feed that in to the server stdin
-if [ -f /data/bootstrap.txt ];
+if [ -f $HOME/data/bootstrap.txt ];
 then
-    exec java $JVM_OPTS -jar $SERVER "$@" $EXTRA_ARGS < /data/bootstrap.txt
+    exec java $JVM_OPTS -jar $SERVER "$@" $EXTRA_ARGS < $HOME/data/bootstrap.txt
 else
     exec java $JVM_OPTS -jar $SERVER "$@" $EXTRA_ARGS
 fi
